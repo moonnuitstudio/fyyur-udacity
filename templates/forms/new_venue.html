@@ -1,8 +1,20 @@
 {% extends 'layouts/main.html' %}
 {% block title %}New Venue{% endblock %}
 {% block content %}
+  {% if form.errors %}
+    <div class="row">
+        <div class="col-md-6">
+          {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+              {% for error in field_errors %}
+                <div class="alert alert-danger" style="margin-bottom: 5px;padding-bottom: 10px;" role="alert"> <i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> {{ form[field_name].label }}: {{ error }}</div>
+              {% endfor %}
+          {% endfor %}
+        </div>
+    </div>
+  {% endif %}
+  
   <div class="form-wrapper">
-    <form method="post" class="form" action="/venues/create">
+    <form id="form-new-venue" method="post" class="form" action="/venues/create">
       <h3 class="form-heading">List a new venue <a href="{{ url_for('index') }}" title="Back to homepage"><i class="fa fa-home pull-right"></i></a></h3>
       <div class="form-group">
         <label for="name">Name</label>
@@ -60,4 +72,8 @@
       <input type="submit" value="Create Venue" class="btn btn-primary btn-lg btn-block">
     </form>
   </div>
+{% endblock %}
+
+{% block scripts %}
+ 
 {% endblock %}
