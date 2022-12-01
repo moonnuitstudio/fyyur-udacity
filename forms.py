@@ -53,7 +53,6 @@ class VenueForm(Form):
         validators=[Length(-1,500),URL(),Optional()]
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', 
         validators=[DataRequired()],
         choices=GenresEnum.choices()
@@ -71,7 +70,7 @@ class VenueForm(Form):
 
     seeking_description = StringField(
         'seeking_description',
-        validators=[Length(-1,120),URL(),Optional()]
+        validators=[Length(-1,120),Optional()]
     )
 
 
