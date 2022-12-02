@@ -76,6 +76,25 @@
 </section>
 
 <a href="/venues/{{ venue.id }}/edit"><button class="btn btn-primary btn-lg">Edit</button></a>
-
+<button id="remove_venue" class="btn btn-danger btn-lg">Delete</button>
 {% endblock %}
 
+{% block scripts %}
+<script>
+	$( document ).ready(function() {
+		$('#remove_venue').click(function({target}) {
+
+			alertify.confirm('Delete Venue?', `Are you sure to delete {{ venue.name }}? This action is irreversible`
+				, async function() { 
+					const res = await axios.delete(`/venues/{{ venue.id }}`);
+
+					const data = res.data.json;
+
+					if (res.data.state) location.href = "/"
+					else alertify.error('An error has occurred!')
+
+				}, function(){ });
+		});
+	});
+</script>
+{% endblock %}

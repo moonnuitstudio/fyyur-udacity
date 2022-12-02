@@ -26,7 +26,7 @@ class Venue(db.Model):
             'id': self.id,
             'name': self.name,
             'city': self.city,
-            'state': self.state,
+            'state': self.state.value,
             'address': self.address,
             'phone': self.phone,
             'genres': self.genres.split(','), 
@@ -47,15 +47,33 @@ class Artist(db.Model):
     __tablename__ = 'Artist'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.Enum(StatesEnum), nullable=False)
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    website_link = db.Column(db.String(120))
+    seeking_venue = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(120))
 
     shows = db.relationship('Show', secondary=artist_shows, backref=db.backref('artists', lazy=True))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'city': self.city,
+            'state': self.state.value,
+            'phone': self.phone,
+            'genres': self.genres.split(','), 
+            'image_link': self.image_link,
+            'facebook_link': self.facebook_link,
+            'website': self.website_link,
+            'seeking_venue': self.seeking_venue,
+            'seeking_description': self.seeking_description,
+        }
 
 class Show(db.Model):
   __tablename__ = 'Show'

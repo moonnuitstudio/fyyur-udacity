@@ -114,7 +114,7 @@ ul.items > li:hover {
   color: orange;
   cursor: pointer;
 }
-ul.items > li:hover h5 {
+ul.items > li:hover h5, ul.items > li:hover p {
   color: orange;
 }
 .item {
