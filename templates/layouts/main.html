@@ -82,6 +82,28 @@
                   >
               </form>
               {% endif %}
+              {% if (request.endpoint == 'shows') or
+                (request.endpoint == 'search_shows') %}
+                <form class="search" method="post" action="/shows/search" style="display: flex; gap: 10px;">
+                  <input class="form-control"
+                    type="search"
+                    name="artist_term"
+                    placeholder="Find by artist"
+                    aria-label="Search"
+                    value={{ artist_term }}
+                    >
+
+                  <input class="form-control"
+                    type="search"
+                    name="venue_term"
+                    placeholder="Find by venue"
+                    aria-label="Search"
+                    value={{ venue_term }}
+                    >
+
+                  <button type="submit" class="btn btn-link"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </form>
+              {% endif %}
             </li>
           </ul>
           <ul class="nav navbar-nav">

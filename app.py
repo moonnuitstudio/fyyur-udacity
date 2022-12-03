@@ -268,7 +268,6 @@ def edit_artist(artist_id):
     seeking_description = artist.seeking_description,
   )
   
-  # TODO: populate form with fields from artist with ID <artist_id>
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
@@ -310,9 +309,6 @@ def edit_artist_submission(artist_id):
     return render_template('forms/edit_artist.html', form=form, erros=form.errors)
   elif has_error:
     flash('An error occurred. Artist ' + request.form["name"] + ' could not be updated.')
-  
-  # TODO: take values from the form submitted, and update existing
-  # artist record with ID <artist_id> using the new attributes
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -337,7 +333,6 @@ def edit_venue(venue_id):
     seeking_description = venue.seeking_description,
   )
   
-  # TODO: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
@@ -432,6 +427,35 @@ def create_artist_submission():
 
 #  Shows
 #  ----------------------------------------------------------------
+
+@app.route('/shows/search', methods=['POST'])
+def search_shows():
+  artist_term = request.form.get('artist_term', '')
+  venue_term = request.form.get('venue_term', '')
+  
+  search_artist_term = "%{}%".format(artist_term)
+  search_venue_term = "%{}%".format(venue_term)
+  
+  #shows = Show.query.filter().all()
+  shows = db.session.query(Show).join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).filter(Artist.name.like(search_artist_term), Venue.name.like(search_venue_term)).all()
+
+  
+  data = []
+  
+  for show in shows:
+    venue = show.venue
+    artist = show.artist
+    
+    data.append({
+      "venue_id": venue.id,
+      "venue_name": venue.name,
+      "artist_id": artist.id,
+      "artist_name": artist.name,
+      "artist_image_link": artist.image_link,
+      "start_time": show.start_time.strftime('%Y-%m-%d %H:%M')
+    })
+
+  return render_template('pages/shows.html', shows=data, artist_term=artist_term, venue_term=venue_term)
 
 @app.route('/shows')
 def shows():
