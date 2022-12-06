@@ -92,7 +92,13 @@
 
 			alertify.confirm('Delete Venue?', `Are you sure to delete {{ venue.name }}? This action is irreversible`
 				, async function() { 
-					const res = await axios.delete(`/venues/{{ venue.id }}`);
+					var token = "{{ csrf_token() }}"
+					const res = await axios.delete(`/venues/{{ venue.id }}`, {
+						headers: {
+							'x-csrf-token': token
+						}
+					});
+
 
 					const data = res.data.json;
 

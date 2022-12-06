@@ -5,14 +5,25 @@
 import sys
 import json
 
-from flask import Flask, render_template, request, Response, flash, redirect, url_for, session
+from flask import (
+  Flask, 
+  render_template, 
+  request, 
+  Response, 
+  flash, 
+  redirect, 
+  url_for, 
+  session
+)
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
+from flask_wtf.csrf import CSRFProtect
 from forms import *
+from datetime import datetime
 
 from models import db, Venue, Artist, Show
 from helpers import format_datetime
@@ -25,8 +36,11 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 app_context = app.app_context()
+csrf = CSRFProtect()
 
 db.init_app(app)
+csrf.init_app(app)
+
 migrate = Migrate(app, db)
 
 app.jinja_env.filters['datetime'] = format_datetime
@@ -46,6 +60,9 @@ def index():
 @app.route('/venues')
 def venues():
   venues = Venue.query.order_by(Venue.city, Venue.state).all()
+  
+  #values = db.session.query(Show).join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).filter(Artist.name.ilike(search_artist_term), Venue.name.ilike(search_venue_term)).all()
+  
   venues_length = len( venues )
   
   areas = []
@@ -61,10 +78,12 @@ def venues():
   for index in range(venues_length):
     venue = venues[index]
     
+    num_upcoming_shows = len( list( filter( lambda x: x.start_time > datetime.today(), venue.shows ) ) )
+    
     _venues.append({
       'id': venue.id,
       'name': venue.name,
-      'num_upcoming_shows': len( list( filter( lambda x: x.start_time > datetime.today(), venue.shows ) ) )
+      'num_upcoming_shows': num_upcoming_shows
     })
     
     if index < venues_length - 1:
@@ -82,9 +101,7 @@ def venues():
 def search_venues():
   search_term = request.form.get('search_term', '')
   search = "%{}%".format(search_term)
-  venues = Venue.query.filter(Venue.name.like(search)).all()
-
-  print(venues)
+  venues = Venue.query.filter(Venue.name.ilike(search)).all()
 
   data = []
 
@@ -140,17 +157,16 @@ def create_venue_submission():
     
     if form.validate():
       venue = Venue(
-        name = request.form["name"],
-        city = request.form["city"],
-        state = request.form["state"],
-        address = request.form["address"],
+        name = form.name.data,
+        city = form.city.data,
+        state = form.state.data,
         genres = ','.join( request.form.getlist('genres') ),
-        phone = request.form["phone"],
-        image_link = request.form["image_link"],
-        facebook_link = request.form["facebook_link"],
-        website_link = request.form["website_link"],
+        phone = form.phone.data,
+        image_link = form.image_link.data,
+        facebook_link = form.facebook_link.data,
+        website_link = form.website_link.data,
         seeking_talent = 'seeking_talent' in request.form,
-        seeking_description = request.form["seeking_description"],
+        seeking_description = form.seeking_description.data,
       )
       db.session.add(venue)
       db.session.commit()
@@ -175,15 +191,16 @@ def delete_venue(venue_id):
     vanue = Venue.query.get(venue_id)
     name = vanue.name
     
-    db.session.delete(vanue)
+    Venue.query.filter_by(id=venue_id).delete()
     db.session.commit()
     flash('Venue ' + name + ' was successfully deleted!')
   except:
     db.session.rollback()
+    print( sys.exc_info() )
     deleted_state = False
   finally:
     db.session.close()
-    
+  print("state", deleted_state)
   return { "state": deleted_state }
 
 #  Artists
@@ -207,7 +224,7 @@ def search_artists():
   search_term = request.form.get('search_term', '')
   search = "%{}%".format(search_term)
   
-  artists = Artist.query.filter(Artist.name.like(search)).all()
+  artists = Artist.query.filter(Artist.name.ilike(search)).all()
   data = []
   
   for artist in artists:
@@ -284,16 +301,18 @@ def edit_artist_submission(artist_id):
       if artist is None:
         raise Exception('Error artist not found')
       
-      artist.name = request.form["name"]
-      artist.city = request.form["city"]
-      artist.state = request.form["state"]
+      print("artist", artist)
+      
+      artist.name = form.name.data
+      artist.city = form.city.data
+      artist.state = form.state.data
       artist.genres = ','.join( request.form.getlist('genres') )
-      artist.phone = request.form["phone"]
-      artist.image_link = request.form["image_link"]
-      artist.facebook_link = request.form["facebook_link"]
-      artist.website_link = request.form["website_link"]
+      artist.phone = form.phone.data
+      artist.image_link = form.image_link.data
+      artist.facebook_link = form.facebook_link.data
+      artist.website_link = form.website_link.data
       artist.seeking_venue = 'seeking_venue' in request.form
-      artist.seeking_description = request.form["seeking_description"]
+      artist.seeking_description = form.seeking_description.data
       
       db.session.commit()
     else:
@@ -395,16 +414,16 @@ def create_artist_submission():
     
     if form.validate():
       artist = Artist(
-        name = request.form["name"],
-        city = request.form["city"],
-        state = request.form["state"],
+        name = form.name.data,
+        city = form.city.data,
+        state = form.state.data,
         genres = ','.join( request.form.getlist('genres') ),
-        phone = request.form["phone"],
-        image_link = request.form["image_link"],
-        facebook_link = request.form["facebook_link"],
-        website_link = request.form["website_link"],
+        phone = form.phone.data,
+        image_link = form.image_link.data,
+        facebook_link = form.facebook_link.data,
+        website_link = form.website_link.data,
         seeking_venue = 'seeking_venue' in request.form,
-        seeking_description = request.form["seeking_description"],
+        seeking_description = form.seeking_description.data,
       )
       db.session.add(artist)
       db.session.commit()
@@ -437,7 +456,7 @@ def search_shows():
   search_venue_term = "%{}%".format(venue_term)
   
   #shows = Show.query.filter().all()
-  shows = db.session.query(Show).join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).filter(Artist.name.like(search_artist_term), Venue.name.like(search_venue_term)).all()
+  shows = db.session.query(Show).join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).filter(Artist.name.ilike(search_artist_term), Venue.name.ilike(search_venue_term)).all()
 
   
   data = []
@@ -459,7 +478,6 @@ def search_shows():
 
 @app.route('/shows')
 def shows():
-  
   shows = Show.query.all()
   data = []
   
@@ -477,7 +495,7 @@ def shows():
     })
   
   return render_template('pages/shows.html', shows=data)
-
+# OK------
 @app.route('/shows/create')
 def create_shows():
   # renders form. do not touch.
@@ -489,12 +507,12 @@ def create_show_submission():
   has_error = False
   has_form_error = False
   
-  form = ShowForm(request.form)
+  form = ShowForm(request.form, meta={"csrf": False})
   
   try:
     if form.validate():
-      venue_id = request.form["venue_id"]
-      artist_id = request.form["artist_id"]
+      venue_id = form.venue_id.data
+      artist_id = form.artist_id.data
       
       venue = Venue.query.get(venue_id)
   
@@ -507,9 +525,9 @@ def create_show_submission():
         raise Exception('Error artist not found')
       
       show = Show(
-        venue_id = request.form["venue_id"],
-        artist_id = request.form["artist_id"],
-        start_time = request.form["start_time"]
+        venue_id = venue_id,
+        artist_id = artist_id,
+        start_time = form.start_time.data
       )
       
       db.session.add(show)

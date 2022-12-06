@@ -55,9 +55,11 @@ def upgrade():
     )
     
     op.create_table('Show',
-        sa.Column('artist_id', sa.Integer(), primary_key=True),
-        sa.Column('venue_id', sa.Integer(), primary_key=True),
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('artist_id', sa.Integer()),
+        sa.Column('venue_id', sa.Integer()),
         sa.Column('start_time', sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint('id')
     )
     
     with op.batch_alter_table('Show', schema=None) as batch_op:

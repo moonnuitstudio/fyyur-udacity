@@ -1,24 +1,23 @@
 from flask_sqlalchemy import SQLAlchemy
 from customenums import GenresEnum, StatesEnum
+from datetime import datetime
 
 db = SQLAlchemy()
 
 class Show(db.Model):
     __tablename__ = 'Show'
 
-    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id', ondelete='CASCADE'), primary_key=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id', ondelete='CASCADE'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id', ondelete='CASCADE'))
+    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id', ondelete='CASCADE'))
     start_time = db.Column(db.DateTime, nullable=False)
-    
-    venue = db.relationship('Venue', back_populates='artists')
-    artist = db.relationship('Artist', back_populates='venues')
     
     def from_venue_page(self):
         return {
             'artist_id': self.artist_id,
             'artist_name': self.artist.name,
             'artist_image_link': self.artist.image_link,
-            'start_time': self.start_time 
+            'start_time': self.start_time.strftime("%m/%d/%Y, %H:%M") 
         }
 
     def from_artist_page(self):
@@ -26,7 +25,7 @@ class Show(db.Model):
             'venue_id': self.venue_id,
             'venue_name': self.venue.name,
             'venue_image_link': self.venue.image_link,
-            'start_time': self.start_time  
+            'start_time': self.start_time.strftime("%m/%d/%Y, %H:%M") 
         }
 
 class Venue(db.Model):
@@ -45,8 +44,7 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String(120))
     genres = db.Column(db.String(120), nullable=False)
     
-    artists = db.relationship('Show', back_populates='venue')
-    shows = db.relationship('Show')
+    shows = db.relationship('Show', backref='venue', lazy='joined', cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -80,8 +78,7 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String(120))
 
     #shows = db.relationship('Show', secondary=artist_shows, backref=db.backref('artists', lazy=True))
-    venues = db.relationship('Show', back_populates='artist')
-    shows = db.relationship('Show')
+    shows = db.relationship('Show', backref='artist', lazy='joined', cascade="all, delete")
     
     def to_dict(self):
         return {

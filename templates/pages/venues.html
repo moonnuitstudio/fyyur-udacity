@@ -31,8 +31,13 @@
 			alertify.confirm('Delete Venue?', `Are you sure to delete ${name}? This action is irreversible`
 				, async function() { 
 					id = target.dataset['id']
+					var token = "{{ csrf_token() }}"
 
-					const res = await axios.delete(`/venues/${id}`);
+					const res = await axios.delete(`/venues/${id}`, {
+						headers: {
+							'x-csrf-token': token
+						}
+					});
 
 					const data = res.data.json;
 
