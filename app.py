@@ -160,6 +160,7 @@ def create_venue_submission():
         name = form.name.data,
         city = form.city.data,
         state = form.state.data,
+        address = form.address.data,
         genres = ','.join( request.form.getlist('genres') ),
         phone = form.phone.data,
         image_link = form.image_link.data,
@@ -174,6 +175,7 @@ def create_venue_submission():
     else:
       return render_template('forms/new_venue.html', form=form, erros=form.errors)
   except:
+    print( sys.exc_info() )
     db.session.rollback()
     flash('An error occurred. Venue ' + request.form["name"] + ' could not be listed.')
   finally:
@@ -368,17 +370,17 @@ def edit_venue_submission(venue_id):
       if venue is None:
         raise Exception('Error venue not found')
       
-      venue.name = request.form["name"]
-      venue.city = request.form["city"]
-      venue.state = request.form["state"]
-      venue.address = request.form["address"]
+      venue.name = form.name.data
+      venue.city = form.city.data
+      venue.state = form.state.data
+      venue.address = form.address.data
       venue.genres = ','.join( request.form.getlist('genres') )
-      venue.phone = request.form["phone"]
-      venue.image_link = request.form["image_link"]
-      venue.facebook_link = request.form["facebook_link"]
-      venue.website_link = request.form["website_link"]
+      venue.phone = form.phone.data
+      venue.image_link = form.image_link.data
+      venue.facebook_link = form.facebook_link.data
+      venue.website_link = form.website_link.data
       venue.seeking_talent = 'seeking_talent' in request.form
-      venue.seeking_description = request.form["seeking_description"]
+      venue.seeking_description = form.seeking_description.data
       
       db.session.commit()
     else:
@@ -431,6 +433,7 @@ def create_artist_submission():
     else:
       has_error_form = True
   except:
+    print( sys.exc_info() )
     db.session.rollback()
     has_error = True
   finally:
@@ -439,7 +442,7 @@ def create_artist_submission():
   if has_error:
     flash('An error occurred. Artist ' + request.form["name"] + ' could not be listed.')
   elif has_error_form:
-    return render_template('forms/new_venue.html', form=form, erros=form.errors)
+    return render_template('forms/new_artist.html', form=form, erros=form.errors)
   
   return render_template('pages/home.html')
 
